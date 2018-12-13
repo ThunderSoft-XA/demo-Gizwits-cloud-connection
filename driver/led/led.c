@@ -14,7 +14,7 @@ extern qapi_GPIO_ID_t gpio_id_tbl[PIN_E_GPIO_MAX];
 extern qapi_TLMM_Config_t tlmm_config[PIN_E_GPIO_MAX];
 
 extern MODULE_PIN_ENUM  led_pin_num_motion ;
-extern MODULE_PIN_ENUM  led_pin_num_Pulsesensor ;
+//extern MODULE_PIN_ENUM  led_pin_num_Pulsesensor ;
 extern MODULE_PIN_ENUM  led_pin_num_pressure ;
 
 
