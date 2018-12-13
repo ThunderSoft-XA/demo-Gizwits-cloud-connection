@@ -1,6 +1,6 @@
 # demo-Gizwits-cloud-connection
 A Demo of Qualcomm MDM9206
-维护者：杨榕，姜远，寇志武
+维护者：杨榕，寇志武，姜远
 
 开工日期：2018年12月6日
 
