@@ -147,9 +147,9 @@ void sensorInit(void)
     gizLog(LOG_INFO,"Sensor initialization ...\n"); 
 
 	led_init();							//led初始化（port）
-	//heartrate_init();					//心率传感器初始化
+	heartrate_init();					//心率传感器初始化
 	//temperature_init();				//温度传感器初始化
-	//motion_init();						//运动传感器初始化
+	motion_init();						//运动传感器初始化
     txm_module_object_allocate(&userTimer, sizeof(TX_TIMER));
     ret = tx_timer_create(userTimer, "userTimer", userTimerCB, NULL, 1,
                           100, TX_AUTO_ACTIVATE);			
