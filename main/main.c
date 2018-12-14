@@ -16,56 +16,38 @@
 #include "gagent_soc.h"
 #include "../Gizwits/gizwits_product.h"
 #include "log.h"
-#include "../driver/led/led.h"
+#include "../driver/gpio/gpio.h"
 
 
 #define QUERY_INTERVAL 5 //S
 
+#define HEART_RATE_THRESHOLD	80		//心率阈值
+#define X_AXIS_THRESHOLD		10		//x轴阈值
+#define Y_AXIS_THRESHOLD		10		//y轴阈值
+#define Z_AXIS_THRESHOLD		10		//z轴阈值
+#define PRESSURE_THRESHOLD		50		//压力阈值
+
+
+
 extern dataPoint_t currentDataPoint;
+extern MODULE_PIN_ENUM  led_pin_num_motion ;
+extern MODULE_PIN_ENUM  led_pin_num_Pulsesensor ;
+extern MODULE_PIN_ENUM  led_pin_num_pressure ;
+extern MODULE_PIN_ENUM  motor_pin_num ;
 
 TX_TIMER *userTimer;
-
-GPIO_MAP_TBL gpio_map_tbl[PIN_E_GPIO_MAX] = {
-/* PIN NUM,     PIN NAME,    GPIO ID  GPIO FUNC */
-	{  4, 		"GPIO01",  		23, 	 0},
-	{  5, 		"GPIO02",  		20, 	 0},
-	{  6, 		"GPIO03",  		21, 	 0},
-	{  7, 		"GPIO04",  		22, 	 0},
-	{ 18, 		"GPIO05",  		11, 	 0},
-	{ 19, 		"GPIO06",  		10, 	 0},
-	{ 22, 		"GPIO07",  		 9, 	 0},
-	{ 23, 		"GPIO08",  	 	 8, 	 0},
-	{ 26, 		"GPIO09",  		15, 	 0},
-	{ 27, 		"GPIO10",  		12, 	 0},
-	{ 28, 		"GPIO11",  		13, 	 0},
-	{ 40, 		"GPIO19",  		19, 	 0},
-	{ 41, 		"GPIO20",  		18, 	 0},
-	{ 64, 		"GPIO21",  		07, 	 0},
-};
-
-/* gpio id table */
-qapi_GPIO_ID_t gpio_id_tbl[PIN_E_GPIO_MAX];
-
-/* gpio tlmm config table */
-qapi_TLMM_Config_t tlmm_config[PIN_E_GPIO_MAX];
-	
-/* Modify this pin num which you want to test */
-MODULE_PIN_ENUM  led_pin_num_motion ;
-MODULE_PIN_ENUM  led_pin_num_Pulsesensor ;
-MODULE_PIN_ENUM  led_pin_num_pressure ;
 
 //led port
 void led_init()
 {
-	   gizLog(LOG_INFO,"led initialization ...\n"); 
-	   //led_pin_num_motion = PIN_E_GPIO_06;
-	   //gpio_config(led_pin_num_motion, QAPI_GPIO_OUTPUT_E, QAPI_GPIO_NO_PULL_E, QAPI_GPIO_2MA_E);	//led for motion
-	   
-	   //led_pin_num_Pulsesensor = PIN_E_GPIO_07;
-	   //gpio_config(led_pin_num_Pulsesensor, QAPI_GPIO_OUTPUT_E, QAPI_GPIO_NO_PULL_E, QAPI_GPIO_2MA_E);	
-	   
-	   led_pin_num_pressure = PIN_E_GPIO_09;						// motor pin;
-	   gpio_config(led_pin_num_pressure, QAPI_GPIO_OUTPUT_E, QAPI_GPIO_NO_PULL_E, QAPI_GPIO_2MA_E);	
+	   gizLog(LOG_INFO,"in led init...\n"); 
+	   led_gpio_config();
+}
+
+void motor_init()
+{
+	   gizLog(LOG_INFO,"in motor_init ...\n"); 
+	   motor_gpio_config();
 }
 
 //heartrate sensor init (Pulsesensor)
@@ -75,13 +57,6 @@ void heartrate_init()
 	//Pulsesensor_init();
 }
 
-//temperature sensor init (QT18b20)
-void temperature_init()
-{
-	gizLog(LOG_INFO,"QT18b20 initialization ...\n"); 
-	//QT18b20_init();
-}
-
 //ADXL345 init
 void motion_init()
 {
@@ -89,6 +64,11 @@ void motion_init()
 	//adxl345_init();
 }
 
+void pressure_init()
+{
+	gizLog(LOG_INFO,"ADXL345 initialization ...\n"); 
+	//fsr402_init();
+}
 
 void ICACHE_FLASH_ATTR userTimerCB(void)
 {
@@ -97,25 +77,29 @@ void ICACHE_FLASH_ATTR userTimerCB(void)
     static uint8_t ccount = 0;
     int8_t status = 0;
 	
-	uint32_t pressure = 80;		//压力
-	uint32_t heartrate = 75;				//心跳
-	int32_t X_axis_Value = 50;			//x轴
+	uint32_t pressure = 80;			//压力
+	uint32_t heartrate = 75;		//心跳
+	int32_t X_axis_Value = 50;		//x轴
 	int32_t Y_axis_Value = 60;
 	int32_t Z_axis_Value = 70;
 	
-	gizLog(LOG_INFO,"before QUERY_INTERVAL....\n"); 
-	if (QUERY_INTERVAL < ctime)
+	//gizLog(LOG_INFO,"before QUERY_INTERVAL....\n"); 
+	if (QUERY_INTERVAL < ctime)			
 	{
-			ctime = 0;
+			ctime = 0;				//come in per 5 times
 			
-			//status = getHealthInfo(&bloodpressure, &heartbeat); 	//health info from Pulsesensor
+			//status = getHeartRateValue(&heartrate); 	//heartrate from Pulsesensor
 			if( status )
 			{
 				gizLog(LOG_INFO,"get health info error\n"); 
 				
 			}
-			currentDataPoint.valueHeartRateValue = heartrate;	
-			//status = getaxis(&stepcount);					//data from ADXL345
+			currentDataPoint.valueHeartRateValue = heartrate;
+			if(currentDataPoint.valueHeartRateValue > HEART_RATE_THRESHOLD)		//心率超过阈值
+			{
+				//set_gpio_value(0x00, led_pin_num_Pulsesensor);
+			}
+			//status = getaxis(&X_axis_Value,&Y_axis_Value,&Z_axis_Value);	//axis from ADXL345
 			if( status )
 			{
 				gizLog(LOG_INFO,"get stepcount error\n"); 
@@ -123,19 +107,30 @@ void ICACHE_FLASH_ATTR userTimerCB(void)
 			}
 			currentDataPoint.valueX_axis_Value = X_axis_Value;
 			currentDataPoint.valueY_axis_Value = Y_axis_Value;
-			currentDataPoint.valueZ_axis_Value = Z_axis_Value;			
-			//status = getPressValue(&pressure);		//data from pressure sensor
+			currentDataPoint.valueZ_axis_Value = Z_axis_Value;		
+			if(currentDataPoint.valueX_axis_Value > X_AXIS_THRESHOLD || currentDataPoint.valueY_axis_Value > Y_AXIS_THRESHOLD
+									|| currentDataPoint.valueZ_axis_Value > Z_AXIS_THRESHOLD)			//x,y,z轴超过阈值
+			{
+				//set_gpio_value(0x00, led_pin_num_motion);
+			}
+			//status = getPressValue(&pressure);		//pressure pressure sensor
 			if( status )
 			{
 				gizLog(LOG_INFO,"get pressure error\n"); 
 			}
 			currentDataPoint.valuePressure_Value = pressure;
+
+			if (currentDataPoint.valuePressure_Value >= PRESSURE_THRESHOLD)			//压力超过阈值
+			{
+				set_gpio_value(0x00, motor_pin_num);
+			}
 			//数据上报
 			gizLog(LOG_INFO,"begin to upload data\n"); 
 			gizwitsHandle((dataPoint_t *)&currentDataPoint);
 			gizLog(LOG_INFO,"currentDataPoint.valueHeartRateValue = %d, currentDataPoint.valueX_axis_Value = %d, currentDataPoint.valueY_axis_Value = %d, currentDataPoint.valueZ_axis_Value = %d, currentDataPoint.valuePressure_Value = %d,\n", 
 			currentDataPoint.valueHeartRateValue, currentDataPoint.valueX_axis_Value,currentDataPoint.valueY_axis_Value,currentDataPoint.valueZ_axis_Value,currentDataPoint.valuePressure_Value);
-			ccount++;
+			ccount++;				//record collect times
+			gizLog(LOG_INFO,"ccount = %d\n", ccount); 
 	}
     ctime++;  
 }
@@ -146,13 +141,14 @@ void sensorInit(void)
     
     gizLog(LOG_INFO,"Sensor initialization ...\n"); 
 
-	led_init();							//led初始化（port）
-	heartrate_init();					//心率传感器初始化
-	//temperature_init();				//温度传感器初始化
-	motion_init();						//运动传感器初始化
+	led_init();							//led  init
+	motor_init();						//motor init
+	heartrate_init();					//plusensor init
+	motion_init();						//adxl345 sensor init
+	pressure_init();					//fsr402 init
     txm_module_object_allocate(&userTimer, sizeof(TX_TIMER));
     ret = tx_timer_create(userTimer, "userTimer", userTimerCB, NULL, 1,
-                          100, TX_AUTO_ACTIVATE);			
+                          200, TX_AUTO_ACTIVATE);			
     if(ret != TX_SUCCESS)
     {
         gizLog(LOG_WARNING,"Failed to create UserTimer.\n");

@@ -61,12 +61,12 @@ int8_t ICACHE_FLASH_ATTR gizwitsEventProcess(eventInfo_t *info, uint8_t *data, u
             if(0x01 == currentDataPoint.valueLedValue)
             {
                 //user handle
-				ledsetvalue(0x00);	
+				//set_gpio_value(0x00);	
             }
             else
             {
                 //user handle
-				ledsetvalue(0x01);	
+				//set_gpio_value(0x01);	
             }
             break;
         case EVENT_MotorValue :
@@ -161,15 +161,15 @@ void ICACHE_FLASH_ATTR userInit(void)
     gizMemset((uint8_t *)&currentDataPoint, 0, sizeof(dataPoint_t));
 
  	/** Warning !!! DataPoint Variables Init , Must Within The Data Range **/ 
-    /*
-   		currentDataPoint.valueLedValue = ;
-   		currentDataPoint.valueMotorValue = ;
-   		currentDataPoint.valueHeartRateValue = ;
-   		currentDataPoint.valueX_axis_Value = ;
-   		currentDataPoint.valueY_axis_Value = ;
-   		currentDataPoint.valueZ_axis_Value = ;
-   		currentDataPoint.valuePressure_Value = ;
-    */
+    
+   		currentDataPoint.valueLedValue = 0;
+   		currentDataPoint.valueMotorValue = 0;
+   		currentDataPoint.valueHeartRateValue = 0;
+   		currentDataPoint.valueX_axis_Value = 0;
+   		currentDataPoint.valueY_axis_Value = 0;
+   		currentDataPoint.valueZ_axis_Value = 0;
+   		currentDataPoint.valuePressure_Value = 0;
+  
 }
 
 
