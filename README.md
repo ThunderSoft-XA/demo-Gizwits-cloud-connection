@@ -1,11 +1,12 @@
 # demo-Gizwits-cloud-connection
 A Demo of Qualcomm MDM9206
-维护者：杨榕，寇志武，姜远，王杰，闫少辉
 
-开工日期：2018年12月6日
+Maintainer: Kou Zhiwu,JiangYuan,Wang Jie,Yan Shaohui,YangRong.
 
-描述：基于高通mdm9206芯片，将终端数据通过NB网络上传到机智云平台；
+Start date: December 6th, 2018
 
-主要实现以下功能
+Description: Based on the Qualcomm mdm9206 chip,  uploade the terminal data  to the wit cloud platform through the NB network;
 
-将终端的数据通过NB网络，发送到机智云平台；
+Mainly achieve the following functions:
+
+Send the data of the terminal to the wit cloud platform through the NB network;
